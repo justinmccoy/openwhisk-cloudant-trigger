@@ -1,7 +1,7 @@
 # OpenWhisk building block - Cloudant Trigger and Enhance with Watson Natual Language Understanding
 Create Cloudant data processing apps with Apache OpenWhisk and Watson on IBM Bluemix. 
 
-![Sample Architecture](https://openwhisk-ui-prod.cdn.us-south.s-bluemix.net/openwhisk/ngow-public/img/getting-started-database-changes.svg)
+![Sample Architecture](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/diagram1.png)
 
 If you're not familiar with the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
 
