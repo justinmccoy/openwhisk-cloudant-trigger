@@ -1,17 +1,28 @@
 # OpenWhisk building block - Cloudant Trigger and Enhance with Watson Natual Language Understanding
 Create Cloudant data processing apps with Apache OpenWhisk and Watson on IBM Bluemix. 
 
-![Sample Architecture](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/diagram1.png)
+![Sample Architecture](https://camo.githubusercontent.com/ae74d5c3edb4283d78b5fef2e5f8fabcbec0c64a/68747470733a2f2f6f70656e776869736b2d75692d70726f642e63646e2e75732d736f7574682e732d626c75656d69782e6e65742f6f70656e776869736b2f6e676f772d7075626c69632f696d672f67657474696e672d737461727465642d64617461626173652d6368616e6765732e737667)
 
 If you're not familiar with the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
 
 This example shows how to create an action that can be integrated with the built in Cloudant changes trigger and read action to execute logic when new data is added.
 
-1. [Configure Cloudant](#1-configure-cloudant)
-2. [Create OpenWhisk actions](#2-create-openwhisk-actions)
-3. [Clean up](#3-clean-up)
+1. [Overview](#1-overview)
+2. [Configure Cloudant](#2-configure-cloudant)
+3. [Configure Watson Natural Language Understanding](#3-configure-watson-natural-language-understanding)
+4. [Create OpenWhisk actions](#4-create-openwhisk-actions)
 
-# 1. Configure Cloudant
+# 1. Overview
+This example shows how to create a _serverless enhancement action_ integrated with the builtin Cloudant changes trigger, read action and write action; executing logic when a new referrer url is added to the CloudantDb.
+
+![Sample Architecture](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/diagram1.png)
+1. A new referrer Url is added to the CloudantDb
+2. Trigger on CloudantDb insert
+3. OpenWhisk action begins analysis
+4. Watson Natural Language Understanding categorizes referrer
+5. CloudantDb is updated with category returned from analysis
+
+# 2. Configure Cloudant
 Log into Bluemix, create a [Cloudant database instance](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/), and name it `openwhisk-cloudant`. Launch the Cloudant web console and create a database named `referrer`. Extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
 
 ```bash
@@ -38,7 +49,7 @@ wsk trigger create data-inserted-trigger \
   --param dbname "$CLOUDANT_DATABASE"
 ```
 
-# 2. Configure Watson Natural Language Understanding
+# 3. Configure Watson Natural Language Understanding
 Login into Bluemix, create a [Watson Natural Language Understanding instance]().  Selected the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these calues as environment variables:
 ```bash
 export NLU_USERNAME=""
