@@ -57,23 +57,31 @@ export NLU_PASSWORD=""
 ```
 
 
-# 3. Create OpenWhisk actions
+# 4. Create OpenWhisk actions
 Create a file named `enhance-with-nlu.js`. This file will define an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the 'url' spectifed on the Cloudant 'referrer' database document insert. 
 
 ```javascript
-var fs = require('fs');
 var NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-language-understanding/v1.js');
 
 function main(params) {
   if (!params.url) {
     return Promise.reject('Url parameter must be set.');
   }
+  
+  if (!params.nlu_username) {
+    return Promise.reject('Watson NLU username must be set.');
+  }
 
+  if (!params.nlu_password) {
+    return Promise.reject('Watson NLU password must be set.');
+  }
   var nlu = new NaturalLanguageUnderstandingV1({
-    username: '',  //get from package binding
-    password: '',  //get from package binding
+    username: 'params.nlu_username',
+    password: 'params.nlu_password',
     version_date: NaturalLanguageUnderstandingV1.VERSION_DATE_2017_02_27
-  });  
+  });
+  
+  console.log('Analyzing w/Watson Natural Language Understanding');
   
   return new Promise(function(resolve, reject) {
     nlu.analyze({
@@ -82,7 +90,6 @@ function main(params) {
         'categories': {},
       }
     }, function(err, response) {
-       console.log('Invoked Watson NLU');
        if (err) {
          console.log('error:', err);
          reject(err);
@@ -99,26 +106,35 @@ function main(params) {
 ```
 
 ## Create action sequence and map to trigger
-Create an OpenWhisk action from the JavaScript function that we just created.
+Before creating our OpenWhisk action, create a package to contain our new action. Packages allow you to set default parameter values for all actions within. Our enhance-with-nlu.js action expects the default parameters of our Watson Natural Language Understanding service to be set.
 ```bash
-wsk action create enhance-with-nlu enhance-with-nlu.js
+wsk package create watson-nlu
+```
+
+Set some default parameters for our newly created waston-nlu package.
+```bash
+wsk package update watson-nlu --param nlu_username $NLU_USERNAME --param nlu_password $NLU_PASSWORD
+```
+Create an OpenWhisk action from the JavaScript function that we just created within our watson-nlu package
+```bash
+wsk action create watson-nlu/enhance-with-nlu enhance-with-nlu.js
 ```
 OpenWhisk actions are stateless code snippets that can be invoked explicitly or in response to an event. To verify the creation of our action, invoke the action explicitly using the code below and pass the parameters using the `--param` command line argument.
 ```bash
 wsk action invoke \
   --blocking \
   --param url http://openwhisk.incubator.apache.org/
-  enhance-with-nlu
+  watson-nlu/enhance-with-nlu
 ```
 Chain together multiple actions using a sequence. Here we will connect the cloudant "read" action with the "enhance_with_nlu" action we just created. The parameter (`url`) outputed from the cloudant "read" action will be passed automatically into our "enhance_with_nlu" action.
 ``` bash
-wsk action create enhance-with-nlu-cloudant-sequence \
-  --sequence /_/openwhisk-cloudant/read,enhance-with-nlu
+wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
+  --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu
 ```
 
 Rules map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
 ```bash
-wsk rule create set-category-rule data-inserted-trigger enhance-with-nlu-cloudant-sequence
+wsk rule create set-category-rule data-inserted-trigger watson-nlu/enhance-with-nlu-cloudant-sequence
 ```
 
 ## Enter data to fire a change
