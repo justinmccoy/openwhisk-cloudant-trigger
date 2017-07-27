@@ -108,33 +108,38 @@ function main(params) {
 ## Create action sequence and map to trigger
 Before creating our OpenWhisk action, create a package to contain our new action. Packages allow you to set default parameter values for all actions within. Our enhance-with-nlu.js action expects the default parameters of our Watson Natural Language Understanding service to be set.
 ```bash
-wsk package create watson-nlu
+wsk package create watson-nlu \
+  --param dbname "$CLOUDANT_DATABASE"
 ```
 
 Set some default parameters for our newly created waston-nlu package.
 ```bash
-wsk package update watson-nlu --param nlu_username $NLU_USERNAME --param nlu_password $NLU_PASSWORD
+wsk package update watson-nlu \
+  --param nlu_username $NLU_USERNAME \
+  --param nlu_password $NLU_PASSWORD
 ```
 Create an OpenWhisk action from the JavaScript function that we just created within our watson-nlu package
 ```bash
-wsk action create watson-nlu/enhance-with-nlu enhance-with-nlu.js
+wsk action create watson-nlu/enhance-with-nlu \
+  enhance-with-nlu.js
 ```
 OpenWhisk actions are stateless code snippets that can be invoked explicitly or in response to an event. To verify the creation of our action, invoke the action explicitly using the code below and pass the parameters using the `--param` command line argument.
 ```bash
 wsk action invoke \
   --blocking \
-  --param url http://openwhisk.incubator.apache.org/
+  --param url http://openwhisk.incubator.apache.org \
   watson-nlu/enhance-with-nlu
 ```
 Chain together multiple actions using a sequence. Here we will connect the cloudant "read" action with the "enhance_with_nlu" action we just created. The parameter (`url`) outputed from the cloudant "read" action will be passed automatically into our "enhance_with_nlu" action.
 ``` bash
 wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
-  --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu
+  --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu,/_/openwhisk-cloudant/update-document
 ```
 
 Rules map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
 ```bash
-wsk rule create set-category-rule data-inserted-trigger watson-nlu/enhance-with-nlu-cloudant-sequence
+wsk rule create set-category-rule data-inserted-trigger \
+  watson-nlu/enhance-with-nlu-cloudant-sequence
 ```
 
 ## Enter data to fire a change
