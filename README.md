@@ -133,7 +133,8 @@ wsk action invoke \
 Chain together multiple actions using a sequence. Here we will connect the cloudant "read" action with the "enhance_with_nlu" action we just created. The parameter (`url`) outputed from the cloudant "read" action will be passed automatically into our "enhance_with_nlu" action.
 ``` bash
 wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
-  --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu,/_/openwhisk-cloudant/update-document
+  --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu,/_/openwhisk-cloudant/update-document \
+  --param dbname $CLOUDANT_DATABASE
 ```
 
 Rules map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
