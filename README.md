@@ -30,7 +30,7 @@ export CLOUDANT_INSTANCE="openwhisk-cloudant"
 export CLOUDANT_USERNAME=""
 export CLOUDANT_PASSWORD=""
 export CLOUDANT_HOSTNAME="$CLOUDANT_USERNAME.cloudant.com"
-export CLOUDANT_DATABASE="referrer"
+export CLOUDANT_DATABASE="referrers"
 ```
 
 In this demo, we will make use of the OpenWhisk Cloudant package, which contains a set of actions and feeds that integrate with a Cloudant database. Use the OpenWhisk CLI to bind the Cloudant package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.
@@ -68,7 +68,11 @@ Filters are defined in the cloudant database as design documents and contain a f
 Invoke the system OpenWhisk action, write, we bound with our cloudant database credentials earlier.
 
 ```bash
-wsk action invoke /_/openwhisk-cloudant/write --param overwrite true --param-file design-doc.json --result
+wsk action invoke /_/openwhisk-cloudant/create-document \
+ --param overwrite true \
+ --param-file design-doc.json \
+ --param dbname "$CLOUDANT_DATABASE" \
+ --result
 ```
 
 The information for the new design document is printed to the screen
@@ -83,7 +87,8 @@ The information for the new design document is printed to the screen
 Update the `data-inserted-trigger` defining our newly created `enance` filter, limiting the trigger from firing unless the filter nlu/enhance return true.
 
 ```bash
-wsk trigger update data-inserted-trigger --param filter "nlu/enhance"
+wsk trigger update data-inserted-trigger \
+ --param filter "nlu/enhance"
 ```
 
 
