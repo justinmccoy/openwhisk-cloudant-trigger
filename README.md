@@ -49,8 +49,46 @@ wsk trigger create data-inserted-trigger \
   --param dbname "$CLOUDANT_DATABASE"
 ```
 
+### Update trigger using a filter function
+We're expecting a URL to be added to a document, or inserted as a new document; the trigger defined above will fire on every document change, not our desired outcome. We are only interested in documents that have a URL field added, and are missing Natural Language Understanding insights. To limit this trigger from firing on every change we need to update using a filter function. 
+
+
+Filters are defined in the cloudant database as design documents and contain a function that tests each object in the changes feed. Only objects that return true stay in the changes feed for further processing.
+```
+{
+  "doc": {
+    "_id": "_design/nlu",
+    "filters": {
+      "enhance": "function(doc, req){if (doc.url){ return true;} return false;}"
+    }
+  }
+}
+```
+
+Invoke the system OpenWhisk action, write, we bound with our cloudant database credentials earlier.
+
+```bash
+wsk action invoke /_/openwhisk-cloudant/write --param overwrite true --param-file design-doc.json --result
+```
+
+The information for the new design document is printed to the screen
+```
+{
+    "id": "_design/mailbox",
+    "ok": true,
+    "rev": "1-5c361ed5141bc7856d4d7c24e4daddfd"
+}
+```
+
+Update the `data-inserted-trigger` defining our newly created `enance` filter, limiting the trigger from firing unless the filter nlu/enhance return true.
+
+```bash
+wsk trigger update data-inserted-trigger --param filter "nlu/enhance"
+```
+
+
 # 3. Configure Watson Natural Language Understanding
-Login into Bluemix, create a [Watson Natural Language Understanding instance]().  Selected the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these calues as environment variables:
+Login into Bluemix, create a [Watson Natural Language Understanding instance]().  Selected the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
 ```bash
 export NLU_USERNAME=""
 export NLU_PASSWORD=""
