@@ -1,0 +1,8 @@
+{
+  "doc": {
+    "_id": "_design/nlu",
+    "filters": {
+      "enhance": "function(doc, req){if (doc.url){ return true;} return false;}"
+    }
+  }
+}
