@@ -39,7 +39,8 @@ In this demo, we will make use of the OpenWhisk Cloudant package, which contains
 wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
   --param username "$CLOUDANT_USERNAME" \
   --param password "$CLOUDANT_PASSWORD" \
-  --param host "$CLOUDANT_HOSTNAME"
+  --param host "$CLOUDANT_HOSTNAME" \
+  --param dbname "$CLOUDANT_DATABASE"
 ```
 
 Triggers are a named channel for a class of events and can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when data is inserted into the "referrer" database using the "changes" feed provided in the Cloudant package we just bound.
@@ -54,7 +55,7 @@ We're expecting a URL to be added to a document, or inserted as a new document; 
 
 
 Filters are defined in the cloudant database as design documents and contain a function that tests each object in the changes feed. Only objects that return true stay in the changes feed for further processing.
-```
+```json
 {
   "doc": {
     "_id": "_design/nlu",
@@ -76,9 +77,9 @@ wsk action invoke /_/openwhisk-cloudant/create-document \
 ```
 
 The information for the new design document is printed to the screen
-```
+```json
 {
-    "id": "_design/mailbox",
+    "id": "_design/nlu",
     "ok": true,
     "rev": "1-5c361ed5141bc7856d4d7c24e4daddfd"
 }
@@ -182,7 +183,7 @@ wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
 
 Rules map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
 ```bash
-wsk rule create set-category-rule data-inserted-trigger \
+wsk rule create enhance-with-nlu-rule data-inserted-trigger \
   watson-nlu/enhance-with-nlu-cloudant-sequence
 ```
 
