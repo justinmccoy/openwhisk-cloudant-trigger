@@ -10,8 +10,9 @@ If you're not familiar with Serverless, and the OpenWhisk programming model [try
 
 1. [Overview](#1-overview)
 2. [Configure Cloudant](#2-configure-cloudant)
-3. [Configure Watson Natural Language Understanding](#3-configure-watson-natural-language-understanding)
-4. [Create OpenWhisk actions](#4-create-openwhisk-actions)
+3. [Configure OpenWhisk Package and Trigger](#3-configure-openwhisk-package)
+4. [Configure Watson Natural Language Understanding](#4-configure-watson-natural-language-understanding)
+5. [Create OpenWhisk actions](#5-create-openwhisk-actions)
 
 # 1. Overview
 This example built on the Serverless model, shows how to create a **rule**, that responds to a **trigger** on changs to  CloudantDb, executing a CloudantDb read and update **action** when a new document is inserted.  This trigger only invokes the action if the document in Cloudant is missing the `nlu` field through a **filter function**.
@@ -36,9 +37,14 @@ Log into Bluemix, create a [CloudantDb Service instance](https://console.ng.blue
 
 With the CloudantDb created, the credentials are needed to listen for database changes. Create and extract the username and password from the "Service Credentials" menu on the Cloudant Db Service Details page:
 
+**Create / Save CloudantDb Credentials**
 ![Create save credentials](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/raw/master/media/service_credentials.png?raw=true)
 
 
+
+From the command-line setup the following environment variables with the CloudantDb credentials identified above.
+
+**Setup environment variables**
 ```bash
 export CLOUDANT_INSTANCE="openwhisk-cloudant"
 export CLOUDANT_USERNAME=""
@@ -47,7 +53,7 @@ export CLOUDANT_HOSTNAME="$CLOUDANT_USERNAME.cloudant.com"
 export CLOUDANT_DATABASE="referrers"
 ```
 
-
+# 3. Configure OpenWhisk Package and Trigger
 In this demo, we will make use of the supplied OpenWhisk Cloudant package on Bluemix, which contains a set of actions and feeds that integrate with a Cloudant database. Use the OpenWhisk CLI to bind the Cloudant package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.  
 
 
@@ -115,7 +121,7 @@ wsk trigger update data-inserted-trigger \
 ```
 
 
-# 3. Configure Watson Natural Language Understanding
+# 4. Configure Watson Natural Language Understanding
 Login into Bluemix, create a [Watson Natural Language Understanding instance]().  Selected the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
 ```bash
 export NLU_USERNAME=""
@@ -123,7 +129,7 @@ export NLU_PASSWORD=""
 ```
 
 
-# 4. Create OpenWhisk actions
+# 5. Create OpenWhisk actions
 Create a file named `enhance-with-nlu.js`. This file will define an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the 'url' spectifed on the Cloudant 'referrer' database document insert. 
 
 ```javascript
