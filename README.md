@@ -35,7 +35,7 @@ Log into Bluemix, create a [CloudantDb Service instance](https://console.ng.blue
 ![Create Database](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/blob/master/media/create_db.png?raw=true)
 
 
-With the CloudantDb created, the credentials are needed to listen for database changes. Create and extract the username and password from the "Service Credentials" menu on the Cloudant Db Service Details page:
+With the CloudantDb created, credentials are needed to listen for database changes. Create and extract the username and password from the "Service Credentials" menu on the CloudantDb Service details page:
 
 **Create / Save CloudantDb Credentials**
 ![Create save credentials](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/raw/master/media/service_credentials.png?raw=true)
@@ -75,7 +75,7 @@ wsk trigger create data-inserted-trigger \
   --param dbname "$CLOUDANT_DATABASE"
 ```
 
-### Update trigger using a filter function
+### Update trigger adding a filter function
 We're expecting a URL to be added to a document, or inserted as a new document; the trigger defined above will fire on every document change, not our desired outcome. We are only interested in documents that have a `url` field, and are missing Natural Language Understanding insights. To limit this trigger from firing on every change we need to update using a **filter function**. 
 
 
@@ -122,7 +122,21 @@ wsk trigger update data-inserted-trigger \
 
 
 # 4. Configure Watson Natural Language Understanding
-Login into Bluemix, create a [Watson Natural Language Understanding instance]().  Selected the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
+Login into Bluemix, create a new [Watson Natural Language Understanding instance](https://console.bluemix.net/catalog/services/natural-language-understanding?env_id=ibm%3Ayp%3Aus-south&taxonomyNavigation=app-services). 
+
+**Create NLU Service in Bluemix**
+
+![Create NLU](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/blob/master/media/create_nlu.png?raw=true)
+
+
+Select the created service and extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
+
+**Get Watson NLU Service Credentials**
+![Get NLU Credentials](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/blob/master/media/nlu_credentials.png?raw=true)
+
+
+
+**Set environment variables for use later** 
 ```bash
 export NLU_USERNAME=""
 export NLU_PASSWORD=""
