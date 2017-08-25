@@ -144,16 +144,17 @@ export NLU_PASSWORD=""
 
 
 # 5. Create OpenWhisk actions
-Create a file named `enhance-with-nlu.js`. This file will define an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the 'url' spectifed on the Cloudant 'referrer' database document insert. 
+Included in the repo is a file `enhance-with-nlu.js`. This file defines an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the `url` spectifed on the Cloudant `referrer` database document insert. 
 
 ```javascript
 var NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-language-understanding/v1.js');
 
 function main(params) {
+  console.log(JSON.stringify(params, null, 2));
   if (!params.url) {
     return Promise.reject('Url parameter must be set.');
   }
-  
+
   if (!params.nlu_username) {
     return Promise.reject('Watson NLU username must be set.');
   }
@@ -161,81 +162,97 @@ function main(params) {
   if (!params.nlu_password) {
     return Promise.reject('Watson NLU password must be set.');
   }
+
   var nlu = new NaturalLanguageUnderstandingV1({
-    username: 'params.nlu_username',
-    password: 'params.nlu_password',
+    username: params.nlu_username,
+    password: params.nlu_password,
     version_date: NaturalLanguageUnderstandingV1.VERSION_DATE_2017_02_27
   });
   
-  console.log('Analyzing w/Watson Natural Language Understanding');
+  console.log('Analyzing w/Watson Natural Language Understanding');      
   
   return new Promise(function(resolve, reject) {
     nlu.analyze({
       'url': params.url,
       'features': {
         'categories': {},
+        'concepts': {},
+        'entities': {},
+        'keywords': {},
+        'emotion': {},
+        'sentiment': {},
+        'metadata': {},
+        'relations': {},
+        'semantic_roles':{}
       }
     }, function(err, response) {
+       var doc = {doc: params};
+
        if (err) {
          console.log('error:', err);
          reject(err);
        } else {
-         if (response.categories[0]) {
-          resolve({category: response.categories[0].label.split('/',2)[1]});
-         } else {
-          resolve({category: 'unknown'});
-         }
+        //console.log(JSON.stringify(response, null, 2)); 
+        doc.doc.nlu = response;
+        resolve(doc);
       }
     });
-  }); 
+  });
 }
 ```
 
 ## Create action sequence and map to trigger
-Before creating our OpenWhisk action, create a package to contain our new action. Packages allow you to set default parameter values for all actions within. Our enhance-with-nlu.js action expects the default parameters of our Watson Natural Language Understanding service to be set.
+Before creating our OpenWhisk action, create a package to contain our new action. Packages allow you to set default parameter values for all actions within. Our `enhance-with-nlu.js` action expects the default parameters of our Watson Natural Language Understanding service to be set.
+
+**Create new package w/default parameters**
 ```bash
 wsk package create watson-nlu \
-  --param dbname "$CLOUDANT_DATABASE"
-```
-
-Set some default parameters for our newly created waston-nlu package.
-```bash
-wsk package update watson-nlu \
+  --param dbname "$CLOUDANT_DATABASE" \
   --param nlu_username $NLU_USERNAME \
   --param nlu_password $NLU_PASSWORD
 ```
-Create an OpenWhisk action from the JavaScript function that we just created within our watson-nlu package
+
+**Create an OpenWhisk action from the JavaScript function that we just created within our watson-nlu package**
 ```bash
 wsk action create watson-nlu/enhance-with-nlu \
   enhance-with-nlu.js
 ```
+
 OpenWhisk actions are stateless code snippets that can be invoked explicitly or in response to an event. To verify the creation of our action, invoke the action explicitly using the code below and pass the parameters using the `--param` command line argument.
+
+**Test the newly created action, passing expected parameters**
 ```bash
 wsk action invoke \
   --blocking \
   --param url http://openwhisk.incubator.apache.org \
   watson-nlu/enhance-with-nlu
 ```
-Chain together multiple actions using a sequence. Here we will connect the cloudant "read" action with the "enhance_with_nlu" action we just created. The parameter (`url`) outputed from the cloudant "read" action will be passed automatically into our "enhance_with_nlu" action.
+
+### Connecting the pieces: triggers, actions, and sequences w/Rules
+Chain together multiple actions using a **sequence**. Here we will connect the cloudant `read` action with the `enhance_with_nlu` action we just created. The parameter (`url`) outputed from the cloudant `read` action will be passed automatically into our `enhance_with_nlu` action.
+
+**Create new sequece of actions**
 ``` bash
 wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
   --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu,/_/openwhisk-cloudant/update-document \
   --param dbname $CLOUDANT_DATABASE
 ```
 
-Rules map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
+**Rules** map triggers with actions. Create a rule that maps the database change trigger to the sequence we just created. Once this rule is created, the actions (or sequence of actions) will be executed whenever the trigger is fired in response to new data inserted into the cloudant database.
+
+**Create new rule**
 ```bash
 wsk rule create enhance-with-nlu-rule data-inserted-trigger \
   watson-nlu/enhance-with-nlu-cloudant-sequence
 ```
 
-## Enter data to fire a change
-Begin streaming the OpenWhisk activation log in a new terminal window.
+## Test everything together
+Begin streaming the OpenWhisk activation log in a new terminal window (also available fromm the Bluemix GUI)
 ```bash
 wsk activation poll
 ```
 
-In the Cloudant dashboard, create a new document in the "referrer" database.
+In the Cloudant dashboard, create a new document in the `referrer` database.
 ```json
 {
   "url": "http://openwhisk.incubator.apache.org/"
