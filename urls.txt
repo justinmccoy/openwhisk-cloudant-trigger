@@ -1,0 +1,8 @@
+nytimes.com
+apple.com
+ibm.com
+snap.com
+jeep.com
+wired.com
+news.ycombinator.com
+
