@@ -26,16 +26,17 @@ This example built on the Serverless model, shows how to create a **rule**, that
 # 2. Configure CloudantDb
 Log into Bluemix, create a [CloudantDb Service instance](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/), and name it `openwhisk-cloudant`.
 
-![Create Cloudant Service](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/cloudantdb_create.png)
+**Create CloudantDb Service**
+![Create Cloudant Service](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/cloudantdb_create.png?raw=true)
 
-Launch the Cloudant web console and create a database named `referrer`.
+**Launch the Cloudant web console and create a database named `referrer`.**
 
-![Create Database](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/media/create_db.png)
+![Create Database](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/blob/master/media/create_db.png?raw=true)
 
 
 With the CloudantDb created, the credentials are needed to listen for database changes. Create and extract the username and password from the "Service Credentials" menu on the Cloudant Db Service Details page:
 
-![Create Database](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/raw/master/media/service_credentials.png)
+![Create save credentials](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/raw/master/media/service_credentials.png?raw=true)
 
 
 ```bash
