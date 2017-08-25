@@ -1,11 +1,12 @@
 # OpenWhisk building block - Cloudant Trigger and Enhance with Watson Natual Language Understanding
-Create Cloudant data processing apps with Apache OpenWhisk and Watson on IBM Bluemix. 
+Create Cloudant data processing apps with Apache OpenWhisk and Watson NLU on IBM Bluemix. 
 
 ![Sample Architecture](https://camo.githubusercontent.com/ae74d5c3edb4283d78b5fef2e5f8fabcbec0c64a/68747470733a2f2f6f70656e776869736b2d75692d70726f642e63646e2e75732d736f7574682e732d626c75656d69782e6e65742f6f70656e776869736b2f6e676f772d7075626c69632f696d672f67657474696e672d737461727465642d64617461626173652d6368616e6765732e737667)
 
-If you're not familiar with the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
+Apache OpenWhisk is a open source cloud platform that executes funcations (called **actions**) in response to events (called **triggers**) without concern for managing the lifecycle or operations of the containers the code is executed in.
 
-This example shows how to create an action that can be integrated with the built in Cloudant changes trigger and read action to execute logic when new data is added.
+If you're not familiar with Serverless, and the OpenWhisk programming model [try the action, trigger, and rule sample first](https://github.com/IBM/openwhisk-action-trigger-rule). [You'll need a Bluemix account and the latest OpenWhisk command line tool](https://github.com/IBM/openwhisk-action-trigger-rule/blob/master/docs/OPENWHISK.md).
+
 
 1. [Overview](#1-overview)
 2. [Configure Cloudant](#2-configure-cloudant)
@@ -13,17 +14,29 @@ This example shows how to create an action that can be integrated with the built
 4. [Create OpenWhisk actions](#4-create-openwhisk-actions)
 
 # 1. Overview
-This example shows how to create a _serverless enhancement action_ integrated with the builtin Cloudant changes trigger, read action and write action; executing logic when a new referrer url is added to the CloudantDb.
+This example built on the Serverless model, shows how to create a **rule**, that responds to a **trigger** on changs to  CloudantDb, executing a CloudantDb read and update **action** when a new document is inserted.  This trigger only invokes the action if the document in Cloudant is missing the `nlu` field through a **filter function**.
 
 ![Sample Architecture](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/diagram1.png)
-1. A new referrer Url is added to the CloudantDb
-2. Trigger on CloudantDb insert
-3. OpenWhisk action begins analysis
-4. Watson Natural Language Understanding categorizes referrer
-5. CloudantDb is updated with category returned from analysis
+1. A new referrer document containing a `url` is added to the CloudantDb
+2. Trigger event is fired on CloudantDb insert, if conditions defined by filter are met
+3. OpenWhisk action responds to trigger, begins analysis
+4. Watson Natural Language Understanding analyzes referrer
+5. CloudantDb is updated with Watson NLU analysis of `url`
 
-# 2. Configure Cloudant
-Log into Bluemix, create a [Cloudant database instance](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/), and name it `openwhisk-cloudant`. Launch the Cloudant web console and create a database named `referrer`. Extract the username and password from the "Service Credentials" tab in Bluemix and set these values as environment variables:
+# 2. Configure CloudantDb
+Log into Bluemix, create a [CloudantDb Service instance](https://console.ng.bluemix.net/catalog/services/cloudant-nosql-db/), and name it `openwhisk-cloudant`.
+
+![Create Cloudant Service](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/cloudant_createdb.png)
+
+Launch the Cloudant web console and create a database named `referrer`.
+
+![Create Database](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/create_db.png)
+
+
+With the CloudantDb created, the credentials are needed to listen for database changes. Create and extract the username and password from the "Service Credentials" menu on the Cloudant Db Service Details page:
+
+![Create Database](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/service_credentials.png)
+
 
 ```bash
 export CLOUDANT_INSTANCE="openwhisk-cloudant"
@@ -33,8 +46,11 @@ export CLOUDANT_HOSTNAME="$CLOUDANT_USERNAME.cloudant.com"
 export CLOUDANT_DATABASE="referrers"
 ```
 
-In this demo, we will make use of the OpenWhisk Cloudant package, which contains a set of actions and feeds that integrate with a Cloudant database. Use the OpenWhisk CLI to bind the Cloudant package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.
 
+In this demo, we will make use of the supplied OpenWhisk Cloudant package on Bluemix, which contains a set of actions and feeds that integrate with a Cloudant database. Use the OpenWhisk CLI to bind the Cloudant package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.  
+
+
+**Create an OpenWhisk package w/default parameters**
 ```bash
 wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
   --param username "$CLOUDANT_USERNAME" \
@@ -43,7 +59,9 @@ wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
   --param dbname "$CLOUDANT_DATABASE"
 ```
 
-Triggers are a named channel for a class of events and can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when data is inserted into the "referrer" database using the "changes" feed provided in the Cloudant package we just bound.
+Triggers are a named channel for a class of events and can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when data is inserted into the `referrer` database using the _changes_ feed provided in the Cloudant package we just created.
+
+**Create trigger on CloudantDb changes w/default parameters**
 ```bash
 wsk trigger create data-inserted-trigger \
   --feed "/_/openwhisk-cloudant/changes" \
@@ -51,10 +69,12 @@ wsk trigger create data-inserted-trigger \
 ```
 
 ### Update trigger using a filter function
-We're expecting a URL to be added to a document, or inserted as a new document; the trigger defined above will fire on every document change, not our desired outcome. We are only interested in documents that have a URL field added, and are missing Natural Language Understanding insights. To limit this trigger from firing on every change we need to update using a filter function. 
+We're expecting a URL to be added to a document, or inserted as a new document; the trigger defined above will fire on every document change, not our desired outcome. We are only interested in documents that have a `url` field, and are missing Natural Language Understanding insights. To limit this trigger from firing on every change we need to update using a **filter function**. 
 
 
-Filters are defined in the cloudant database as design documents and contain a function that tests each object in the changes feed. Only objects that return true stay in the changes feed for further processing.
+Filters are defined in the Cloudant database as design documents and contain a function that tests each object in the changes feed. Only objects that return `true` stay in the changes feed for further processing.
+
+**design-doc.json**
 ```json
 {
   "doc": {
@@ -66,8 +86,9 @@ Filters are defined in the cloudant database as design documents and contain a f
 }
 ```
 
-Invoke the system OpenWhisk action, write, we bound with our cloudant database credentials earlier.
+The OpenWhisk package created above with the default parameters of our CloudantDb service contains several actions that can now be directly invoked. From the command-line invoke the system OpenWhisk action, _write_.  This creates a new design document in our `referrer` database with a filter `nlu/enhance` identifing if documents contain the `url` field. 
 
+**Create design-document containing filter in CloudantDb**
 ```bash
 wsk action invoke /_/openwhisk-cloudant/create-document \
  --param overwrite true \
@@ -85,7 +106,7 @@ The information for the new design document is printed to the screen
 }
 ```
 
-Update the `data-inserted-trigger` defining our newly created `enance` filter, limiting the trigger from firing unless the filter nlu/enhance return true.
+With a filter available in the CloudantDb, update the `data-inserted-trigger` defining our newly created `enance` filter, limiting the trigger from firing unless the filter `nlu/enhance` return `true`.
 
 ```bash
 wsk trigger update data-inserted-trigger \
