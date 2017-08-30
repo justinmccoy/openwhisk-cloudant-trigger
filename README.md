@@ -30,7 +30,7 @@ Log into Bluemix, create a [CloudantDb Service instance](https://console.ng.blue
 **Create CloudantDb Service**
 ![Create Cloudant Service](https://raw.githubusercontent.com/justinmccoy/openwhisk-enhance-with-watson-nlu/master/media/cloudantdb_create.png?raw=true)
 
-**Launch the Cloudant web console and create a database named `referrer`.**
+**Launch the Cloudant web console and create a database named `referrers`.**
 
 ![Create Database](https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu/blob/master/media/create_db.png?raw=true)
 
@@ -66,7 +66,7 @@ bx wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
   --param dbname "$CLOUDANT_DATABASE"
 ```
 
-Triggers are a named channel for a class of events and can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when data is inserted into the `referrer` database using the _changes_ feed provided in the Cloudant package we just created.
+Triggers are a named channel for a class of events and can be explicitly fired by a user or fired on behalf of a user by an external event source, such as a feed. Use the code below to create a trigger to fire events when data is inserted into the `referrers` database using the _changes_ feed provided in the Cloudant package we just created.
 
 **Create trigger on CloudantDb changes w/default parameters**
 ```bash
@@ -93,7 +93,7 @@ Filters are defined in the Cloudant database as design documents and contain a f
 }
 ```
 
-The OpenWhisk package created above with the default parameters of our CloudantDb service contains several actions that can now be directly invoked. From the command-line invoke the system OpenWhisk action, _write_.  This creates a new design document in our `referrer` database with a filter `nlu/enhance` identifing if documents contain the `url` field. 
+The OpenWhisk package created above with the default parameters of our CloudantDb service contains several actions that can now be directly invoked. From the command-line invoke the system OpenWhisk action, _write_.  This creates a new design document in our `referrers` database with a filter `nlu/enhance` identifing if documents contain the `url` field. 
 
 **Create design-document containing filter in CloudantDb**
 ```bash
@@ -144,7 +144,7 @@ export NLU_PASSWORD=""
 
 
 # 5. Create OpenWhisk actions
-Included in the repo is a file `enhance-with-nlu.js`. This file defines an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the `url` spectifed on the Cloudant `referrer` database document insert. 
+Included in the repo is a file `enhance-with-nlu.js`. This file defines an OpenWhisk action written as a JavaScript function. This function will call the Watson Natural Language Understanding service with the `url` spectifed on the Cloudant `referrers` database document insert. 
 
 ```javascript
 var NaturalLanguageUnderstandingV1 = require('watson-developer-cloud/natural-language-understanding/v1.js');
