@@ -59,7 +59,7 @@ In this demo, we will make use of the supplied OpenWhisk Cloudant package on Blu
 
 **Create an OpenWhisk package w/default parameters**
 ```bash
-wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
+bx wsk package bind /whisk.system/cloudant "$CLOUDANT_INSTANCE" \
   --param username "$CLOUDANT_USERNAME" \
   --param password "$CLOUDANT_PASSWORD" \
   --param host "$CLOUDANT_HOSTNAME" \
@@ -70,7 +70,7 @@ Triggers are a named channel for a class of events and can be explicitly fired b
 
 **Create trigger on CloudantDb changes w/default parameters**
 ```bash
-wsk trigger create data-inserted-trigger \
+bx wsk trigger create data-inserted-trigger \
   --feed "/_/openwhisk-cloudant/changes" \
   --param dbname "$CLOUDANT_DATABASE"
 ```
@@ -97,7 +97,7 @@ The OpenWhisk package created above with the default parameters of our CloudantD
 
 **Create design-document containing filter in CloudantDb**
 ```bash
-wsk action invoke /_/openwhisk-cloudant/create-document \
+bx wsk action invoke /_/openwhisk-cloudant/create-document \
  --param overwrite true \
  --param-file design-doc.json \
  --param dbname "$CLOUDANT_DATABASE" \
@@ -116,7 +116,7 @@ The information for the new design document is printed to the screen
 With a filter available in the CloudantDb, update the `data-inserted-trigger` defining our newly created `enance` filter, limiting the trigger from firing unless the filter `nlu/enhance` return `true`.
 
 ```bash
-wsk trigger update data-inserted-trigger \
+bx wsk trigger update data-inserted-trigger \
  --param filter "nlu/enhance"
 ```
 
@@ -206,7 +206,7 @@ Before creating our OpenWhisk action, create a package to contain our new action
 
 **Create new package w/default parameters**
 ```bash
-wsk package create watson-nlu \
+bx wsk package create watson-nlu \
   --param dbname "$CLOUDANT_DATABASE" \
   --param nlu_username $NLU_USERNAME \
   --param nlu_password $NLU_PASSWORD
@@ -214,7 +214,7 @@ wsk package create watson-nlu \
 
 **Create an OpenWhisk action from the JavaScript function that we just created within our watson-nlu package**
 ```bash
-wsk action create watson-nlu/enhance-with-nlu \
+bx wsk action create watson-nlu/enhance-with-nlu \
   enhance-with-nlu.js
 ```
 
@@ -222,7 +222,7 @@ OpenWhisk actions are stateless code snippets that can be invoked explicitly or 
 
 **Test the newly created action, passing expected parameters**
 ```bash
-wsk action invoke \
+bx wsk action invoke \
   --blocking \
   --param url http://openwhisk.incubator.apache.org \
   watson-nlu/enhance-with-nlu
@@ -233,7 +233,7 @@ Chain together multiple actions using a **sequence**. Here we will connect the c
 
 **Create new sequece of actions**
 ``` bash
-wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
+bx wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
   --sequence /_/openwhisk-cloudant/read,watson-nlu/enhance-with-nlu,/_/openwhisk-cloudant/update-document \
   --param dbname $CLOUDANT_DATABASE
 ```
@@ -242,17 +242,17 @@ wsk action create watson-nlu/enhance-with-nlu-cloudant-sequence \
 
 **Create new rule**
 ```bash
-wsk rule create enhance-with-nlu-rule data-inserted-trigger \
+bx wsk rule create enhance-with-nlu-rule data-inserted-trigger \
   watson-nlu/enhance-with-nlu-cloudant-sequence
 ```
 
 ## Test everything together
 Begin streaming the OpenWhisk activation log in a new terminal window (also available fromm the Bluemix GUI)
 ```bash
-wsk activation poll
+bx wsk activation poll
 ```
 
-In the Cloudant dashboard, create a new document in the `referrer` database.
+In the Cloudant dashboard, create a new document in the `referrers` database.
 ```json
 {
   "url": "http://openwhisk.incubator.apache.org/"
@@ -265,7 +265,7 @@ View the OpenWhisk log to look for the change notification.
 # Troubleshooting
 Check for errors first in the OpenWhisk activation log. Tail the log on the command line with `wsk activation poll` or drill into details visually with the [monitoring console on Bluemix](https://console.ng.bluemix.net/openwhisk/dashboard).
 
-If the error is not immediately obvious, make sure you have the [latest version of the `wsk` CLI installed](https://console.ng.bluemix.net/openwhisk/learn/cli). If it's older than a few weeks, download an update.
+If the error is not immediately obvious, make sure you have the [latest version of the `bx wsk` CLI installed](https://console.ng.bluemix.net/openwhisk/learn/cli). If it's older than a few weeks, download an update.
 ```bash
 wsk property get --cliversion
 ```
