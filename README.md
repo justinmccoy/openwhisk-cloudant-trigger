@@ -56,6 +56,11 @@ export CLOUDANT_DATABASE="referrers"
 # 3. Configure OpenWhisk Package and Trigger
 In this demo, we will make use of the supplied OpenWhisk Cloudant package on Bluemix, which contains a set of actions and feeds that integrate with a Cloudant database. Use the OpenWhisk CLI to bind the Cloudant package using your credentials. Binding a package allows you to set the default parameters that are inherited by every action and feed in the package.  
 
+**Download the code**
+
+```bash
+git clone https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu.git
+'''
 
 **Create an OpenWhisk package w/default parameters**
 ```bash
