@@ -60,7 +60,7 @@ In this demo, we will make use of the supplied OpenWhisk Cloudant package on Blu
 
 ```bash
 git clone https://github.com/justinmccoy/openwhisk-enhance-with-watson-nlu.git
-'''
+```
 
 **Create an OpenWhisk package w/default parameters**
 ```bash
